@@ -1,0 +1,50 @@
+﻿// This is a test program in the BrainBox+ / BB+ / BBP language!
+// This language was created by the BrainBox Interactive team for use with modding.
+// Last edit: 21/03/2023
+
+myFunction => fn() {
+    message: "Hello!";
+}
+
+mod Player {
+    // Initialise the player's position
+    // Parameters: x - the x position
+    //             y - the y position
+    x => 0; y => 0;
+    
+    // Function to move the player horizontally
+    // Parameters: units - the number of units/pixels to move
+    movePlayerX => @fn(units) {
+        message: "Moving player by", units, "units horizontally.";
+        x => x + units;
+    }
+    
+    // Function to move the player vertically
+    // Parameters: units - the number of units/pixels to move
+    movePlayerY => @fn(units) {
+        message: "Moving player by", units, "units vertically.";
+        y => y + units;
+    }
+}
+
+waitSeconds => @fn(seconds) {
+    consoleColor: Yellow;
+    
+    if (seconds == 1) { message: "Waiting for", seconds, "second."; }
+    else { message: "Waiting for", seconds, "seconds."; }
+    
+    wait: seconds * 1000;
+    consoleColor: White;
+}
+
+// Wait 2 seconds, then move the player 1 unit horizontally.
+waitSeconds: 2;
+Player.movePlayerX: 1;
+
+// Wait 2 seconds, then move the player 1 unit vertically.
+waitSeconds: 2;
+Player.movePlayerY: 1;
+
+// Wait 1 second, then call myFunction.
+waitSeconds: 1;
+myFunction;
