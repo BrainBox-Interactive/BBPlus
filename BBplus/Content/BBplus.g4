@@ -52,7 +52,7 @@ block: '{' line* '}';
 
 WS: [ \t\r\n]+ -> skip;
 SINGLELINE_COMMENT: '//' ~[\r\n]* -> skip;
-MULTILINE_COMMENT: '/*' ~'*' ('*' ~'/')* '*'? '/' -> skip;
+MULTILINE_COMMENT: '/*' .*? '*/' -> skip;
 
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 MOD: [a-zA-Z_][a-zA-Z0-9_]*;

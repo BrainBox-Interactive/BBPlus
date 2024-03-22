@@ -18,11 +18,17 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
 
     public BBplusVisitor()
     {
+        #region Normal Variables
         PrivateVariables["_PI_"] = Math.PI;
         PrivateVariables["_E_"] = Math.E;
         
+        Variables["_PI_"] = PrivateVariables["_PI_"];
+        Variables["_E_"] = PrivateVariables["_E_"];
+        #endregion
+        
         // Colors
         // i could've done this better but uh it works
+        #region Colors
         PrivateVariables["Black"] = Functions.Colors[0];
         PrivateVariables["DarkBlue"] = Functions.Colors[1];
         PrivateVariables["DarkGreen"] = Functions.Colors[2];
@@ -40,9 +46,6 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
         PrivateVariables["White"] = Functions.Colors[14];
         PrivateVariables["Yellow"] = Functions.Colors[15];
         
-        Variables["_PI_"] = PrivateVariables["_PI_"];
-        Variables["_E_"] = PrivateVariables["_E_"];
-        
         Variables["Black"] = PrivateVariables["Black"];
         Variables["DarkBlue"] = PrivateVariables["DarkBlue"];
         Variables["DarkGreen"] = PrivateVariables["DarkGreen"];
@@ -59,11 +62,14 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
         Variables["Magenta"] = PrivateVariables["Magenta"];
         Variables["White"] = PrivateVariables["White"];
         Variables["Yellow"] = PrivateVariables["Yellow"];
-        
+        #endregion
+
+        #region Functions
         PrivateFunctions["message"] = Functions.Message;
         PrivateFunctions["wait"] = Functions.Wait;
         PrivateFunctions["throw"] = Throw;
         PrivateFunctions["consoleColor"] = Functions.ConsoleColor;
+        #endregion
     }
     
     private object? Throw(object?[] args)

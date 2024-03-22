@@ -46,6 +46,10 @@ mod Counter {
     }
 }
 
+/* 
+ok
+*/
+
 waitSeconds => @fn(seconds) {
     consoleColor: Yellow;
     
