@@ -1,6 +1,6 @@
 ﻿// This is a test program in the BrainBox+ / BB+ / BBP language!
 // This language was created by the BrainBox Interactive team for use with modding.
-// Last edit: 21/03/2023
+// Last edit: 22/03/2023
 
 myFunction => fn() {
     message: "Hello!";
@@ -24,6 +24,25 @@ mod Player {
     movePlayerY => @fn(units) {
         message: "Moving player by", units, "units vertically.";
         y => y + units;
+    }
+}
+
+mod Counter {
+    count => 0;
+    
+    increment => @fn() {
+        count => count + 1;
+        message: "Count is now", count;
+    }
+    
+    decrement => @fn() {
+        count => count - 1;
+        message: "Count is now", count;
+    }
+    
+    reset => @fn() {
+        count => 0;
+        message: "Count is now", count;
     }
 }
 

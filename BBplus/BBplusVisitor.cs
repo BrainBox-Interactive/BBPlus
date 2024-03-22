@@ -290,9 +290,6 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
         var t_funcPrv = context.PRIVATE() is { };
         var t_funcArgs = context.IDENTIFIER().Skip(t_funcMod ? 2 : 1).Select(x => x.GetText()).ToArray();
         var t_funcCode = context.block();
-        
-        // check if identifier more than 1 everywhere other than arguments
-        Console.WriteLine(context.IDENTIFIER().Select(x => x.GetText()).ToArray().Length);
 
         if (t_funcName != null && PrivateFunctions.ContainsKey(t_funcName))
         {

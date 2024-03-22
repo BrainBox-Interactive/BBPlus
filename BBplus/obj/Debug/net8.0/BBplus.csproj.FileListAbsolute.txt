@@ -23,3 +23,4 @@ C:\Users\lance\Desktop\projects\BBplus\BBplus\BBplus\obj\Debug\net8.0\refint\BBp
 C:\Users\lance\Desktop\projects\BBplus\BBplus\BBplus\obj\Debug\net8.0\BBplus.pdb
 C:\Users\lance\Desktop\projects\BBplus\BBplus\BBplus\obj\Debug\net8.0\BBplus.genruntimeconfig.cache
 C:\Users\lance\Desktop\projects\BBplus\BBplus\BBplus\obj\Debug\net8.0\ref\BBplus.dll
+C:\Users\lance\Desktop\projects\BBplus\BBplus\BBplus\obj\Debug\net8.0\BBplus.sourcelink.json
