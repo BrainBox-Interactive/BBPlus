@@ -1,4 +1,5 @@
-﻿using Antlr4.Runtime;
+﻿using System.Collections;
+using Antlr4.Runtime;
 using BBplus.Content;
 
 namespace BBplus;
@@ -18,59 +19,46 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
 
     public BBplusVisitor()
     {
-        #region Normal Variables
-        PrivateVariables["_PI_"] = Math.PI;
-        PrivateVariables["_E_"] = Math.E;
+        // Initialize normal variables
+        var t_normalVariables = new Dictionary<string, double>
+        {
+            { "_PI_", Math.PI },
+            { "_E_", Math.E }
+        };
+        foreach (var t_variable in t_normalVariables)
+        {
+            PrivateVariables[t_variable.Key] = t_variable.Value;
+            Variables[t_variable.Key] = t_variable.Value;
+        }
         
-        Variables["_PI_"] = PrivateVariables["_PI_"];
-        Variables["_E_"] = PrivateVariables["_E_"];
-        #endregion
-        
-        // Colors
-        // i could've done this better but uh it works
-        #region Colors
-        PrivateVariables["Black"] = Functions.Colors[0];
-        PrivateVariables["DarkBlue"] = Functions.Colors[1];
-        PrivateVariables["DarkGreen"] = Functions.Colors[2];
-        PrivateVariables["DarkCyan"] = Functions.Colors[3];
-        PrivateVariables["DarkRed"] = Functions.Colors[4];
-        PrivateVariables["DarkMagenta"] = Functions.Colors[5];
-        PrivateVariables["DarkYellow"] = Functions.Colors[6];
-        PrivateVariables["Gray"] = Functions.Colors[7];
-        PrivateVariables["DarkGray"] = Functions.Colors[8];
-        PrivateVariables["Blue"] = Functions.Colors[9];
-        PrivateVariables["Green"] = Functions.Colors[10];
-        PrivateVariables["Cyan"] = Functions.Colors[11];
-        PrivateVariables["Red"] = Functions.Colors[12];
-        PrivateVariables["Magenta"] = Functions.Colors[13];
-        PrivateVariables["White"] = Functions.Colors[14];
-        PrivateVariables["Yellow"] = Functions.Colors[15];
-        
-        Variables["Black"] = PrivateVariables["Black"];
-        Variables["DarkBlue"] = PrivateVariables["DarkBlue"];
-        Variables["DarkGreen"] = PrivateVariables["DarkGreen"];
-        Variables["DarkCyan"] = PrivateVariables["DarkCyan"];
-        Variables["DarkRed"] = PrivateVariables["DarkRed"];
-        Variables["DarkMagenta"] = PrivateVariables["DarkMagenta"];
-        Variables["DarkYellow"] = PrivateVariables["DarkYellow"];
-        Variables["Gray"] = PrivateVariables["Gray"];
-        Variables["DarkGray"] = PrivateVariables["DarkGray"];
-        Variables["Blue"] = PrivateVariables["Blue"];
-        Variables["Green"] = PrivateVariables["Green"];
-        Variables["Cyan"] = PrivateVariables["Cyan"];
-        Variables["Red"] = PrivateVariables["Red"];
-        Variables["Magenta"] = PrivateVariables["Magenta"];
-        Variables["White"] = PrivateVariables["White"];
-        Variables["Yellow"] = PrivateVariables["Yellow"];
-        #endregion
-
-        #region Functions
-        PrivateFunctions["message"] = Functions.Message;
-        PrivateFunctions["wait"] = Functions.Wait;
-        PrivateFunctions["throw"] = Throw;
-        PrivateFunctions["consoleColor"] = Functions.ConsoleColor;
-        #endregion
+        // Initialize colors
+        var t_colorNames = new[]
+        {
+            "Black", "DarkBlue", "DarkGreen", "DarkCyan", "DarkRed",
+            "DarkMagenta", "DarkYellow", "Gray", "DarkGray", "Blue",
+            "Green", "Cyan", "Red", "Magenta", "White", "Yellow"
+        };
+        for (int t_i = 0; t_i < t_colorNames.Length; t_i++)
+        {
+            var t_colorName = t_colorNames[t_i];
+            PrivateVariables[t_colorName] = Functions.Colors[t_i];
+            Variables[t_colorName] = Functions.Colors[t_i];
+        }
+    
+        // Initialize functions
+        var t_functions = new Dictionary<string, Func<object?[], object?>>
+        {
+            { "message", Functions.Message },
+            { "wait", Functions.Wait },
+            { "throw", Throw },
+            { "consoleColor", Functions.ConsoleColor }
+        };
+        foreach (var t_function in t_functions)
+        {
+            PrivateFunctions[t_function.Key] = t_function.Value;
+        }
     }
+
     
     private object? Throw(object?[] args)
     {
@@ -85,7 +73,9 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
         var t_varPrv = context.PRIVATE() is { };
         var t_varName = context.IDENTIFIER().GetText();
         var t_varValue = Visit(context.expression());
-
+        
+        // Console.WriteLine("Variable: " + t_varName + ", Value: " + t_varValue);
+        
         if (t_varPrv)
         {
             if (!PrivateVariables.TryAdd(t_varName, t_varValue))
@@ -99,6 +89,7 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
         
         // put it in the variables
         Variables[t_varName] = t_varValue;
+        // Console.WriteLine("Final Value: " + Variables[t_varName]);
         
         return null;
     }
@@ -149,24 +140,17 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
             // Handle storing the result in the appropriate mod
             // For simplicity, let's assume mods are stored in a dictionary
             // You might want to adjust this based on your application's needs
-            var t_currentMod = GetCurrentMod();
-            if (!Mods.TryAdd(t_currentMod, t_result))
-                Helper.Error(Program.Filename, "Module error", $"Module {t_currentMod} already exists.", context.Start.Line);
+            if (!Mods.TryAdd(_modName, t_result))
+                Helper.Error(Program.Filename, "Module error", $"Module {_modName} already exists.", context.Start.Line);
 
             return null;
         }
         finally
         {
             // Pop the current mod from the stack
-            // Console.WriteLine("current line number: " + context.Stop.Line);
             _modName = String.Empty;
             ModStack.Pop();
         }
-    }
-    
-    private string GetCurrentMod()
-    {
-        return ModStack.Count > 0 ? string.Join(".", ModStack.Reverse()) : "";
     }
 
     public override object? VisitConstant(BBplusParser.ConstantContext context)

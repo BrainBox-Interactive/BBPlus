@@ -17,6 +17,7 @@ mod Player {
     movePlayerX => @fn(units) {
         message: "Moving player by", units, "units horizontally.";
         x => x + units;
+        message: "Player is now at", x + ",", y;
     }
     
     // Function to move the player vertically
@@ -24,6 +25,7 @@ mod Player {
     movePlayerY => @fn(units) {
         message: "Moving player by", units, "units vertically.";
         y => y + units;
+        message: "Player is now at", x + ",", y;
     }
 }
 
@@ -55,6 +57,10 @@ waitSeconds => @fn(seconds) {
     wait: seconds * 1000;
     consoleColor: White;
 }
+
+Counter.increment;
+waitSeconds: 1;
+Counter.decrement;
 
 // Wait 2 seconds, then move the player 1 unit horizontally.
 waitSeconds: 2;
