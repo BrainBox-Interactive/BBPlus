@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BBplus")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+289427db598eb528229454075a1284c5294d7741")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4b75242a706c04fe9c5182d22e6efc0b1249948")]
 [assembly: System.Reflection.AssemblyProductAttribute("BBplus")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BBplus")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

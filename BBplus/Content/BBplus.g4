@@ -36,6 +36,8 @@ BOOL_OPERATOR: '&&' | '||' | '|||';
 
 constant: INTEGER | FLOAT | STRING | BOOL | NULL;
 
+block: START line* END;
+
 INTEGER: [0-9]+;
 FLOAT: [0-9]+'.'[0-9]+;
 STRING: ('"' ~'"'* '"') | ('\'' ~'\''* '\'');
@@ -48,7 +50,8 @@ ELSE: 'else' | 'or';
 FUNCTION: 'fn' | 'function';
 PRIVATE: '@';
 
-block: '{' line* '}';
+START: '{';
+END: '}';
 
 WS: [ \t\r\n]+ -> skip;
 SINGLELINE_COMMENT: '//' ~[\r\n]* -> skip;

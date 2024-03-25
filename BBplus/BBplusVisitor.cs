@@ -4,6 +4,13 @@ using BBplus.Content;
 
 namespace BBplus;
 
+public class Mod(string name)
+{
+    public string Name { get; } = name;
+    public Dictionary<string, object?> Variables { get; } = new Dictionary<string, object?>();
+    public Dictionary<string, object?> PrivateVariables { get; } = new Dictionary<string, object?>();
+}
+
 public class BBplusVisitor : BBplusBaseVisitor<object?>
 {
     private Dictionary<string, object?> Variables { get; } = new();
@@ -12,8 +19,11 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
     private Dictionary<string, Func<object?[], object?>> PrivateFunctions { get; } = new();
     private Dictionary<string, Func<object?[], object?>> PublicFunctions { get; } = new();
     
-    private Dictionary<string, object?> Mods { get; } = new();
-    private Stack<string> ModStack { get; } = new Stack<string>();
+    private Dictionary<string, Mod> Mods { get; } = new Dictionary<string, Mod>();
+    private Stack<Mod> ModStack { get; } = new Stack<Mod>();
+    
+    // Set to keep track of active mods
+    private HashSet<Mod> ActiveMods { get; } = new HashSet<Mod>();
     
     private object? ReturnValue { get; set; }
 
@@ -68,89 +78,123 @@ public class BBplusVisitor : BBplusBaseVisitor<object?>
         return ReturnValue;
     }
     
-    public override object? VisitAssignement(BBplusParser.AssignementContext context)
+    private void HandleError(string errorType, string errorMessage, int lineNumber)
     {
-        var t_varPrv = context.PRIVATE() is { };
-        var t_varName = context.IDENTIFIER().GetText();
-        var t_varValue = Visit(context.expression());
-        
-        // Console.WriteLine("Variable: " + t_varName + ", Value: " + t_varValue);
-        
-        if (t_varPrv)
-        {
-            if (!PrivateVariables.TryAdd(t_varName, t_varValue))
-                // throw new Exception($"Variable {t_varName} cannot be defined and/or already exists.");
-                Helper.Error(Program.Filename, "Variable error", $"Variable {t_varName} cannot be defined and/or already exists.", context.Start.Line);
-        }
-        else
-            if (PrivateVariables.ContainsKey(t_varName))
-                // throw new Exception($"Variable {t_varName} already exists and is private.");
-                Helper.Error(Program.Filename, "Variable error", $"Variable {t_varName} already exists and is private.", context.Start.Line);
-        
-        // put it in the variables
-        Variables[t_varName] = t_varValue;
-        // Console.WriteLine("Final Value: " + Variables[t_varName]);
-        
-        return null;
+        Helper.Error(Program.Filename, errorType, errorMessage, lineNumber);
     }
 
+    private void HandleError(string errorType, string errorMessage, int? lineNumber = null)
+    {
+        Helper.Error(Program.Filename, errorType, errorMessage, lineNumber);
+    }
+    
+    public override object VisitAssignement(BBplusParser.AssignementContext context)
+    {
+        var isPrivate = context.PRIVATE() is not null;
+        var varName = context.IDENTIFIER().GetText();
+        var varValue = Visit(context.expression());
+
+        if (ModStack.Count > 0)
+        {
+            // Get the current mod from the stack
+            var currentMod = ModStack.Peek();
+
+            if (isPrivate)
+            {
+                if (varValue != null && !currentMod.Variables.TryAdd(varName, varValue))
+                    HandleError("Variable error", $"Variable {varName} cannot be defined and/or already exists.", context.Start.Line);
+                else
+                    currentMod.PrivateVariables[varName] = varValue;
+            } 
+            else currentMod.Variables[varName] = varValue;
+        }
+        else
+        {
+            // No Mod context, operate on normal variables
+            if (isPrivate)
+            {
+                if (varValue != null && !Variables.TryAdd(varName, varValue))
+                    HandleError("Variable error", $"Variable {varName} cannot be defined and/or already exists.", context.Start.Line);
+                else
+                    PrivateVariables[varName] = varValue;
+            }
+            else Variables[varName] = varValue;
+        }
+        
+        // Console.WriteLine(ModStack.Peek().Name + "." + varName + " = " + varValue);
+        // Console.WriteLine($"{varName} = {varValue} is stored in {ModStack.Peek().Name}.");
+
+        return null!;
+    }
     public override object? VisitBlockExpr(BBplusParser.BlockExprContext context) => Visit(context.block());
 
     public override object? VisitIdExpr(BBplusParser.IdExprContext context)
     {
-        var t_varName = context.IDENTIFIER().GetText();
-        
-        if (ReturnValue != null && Variables.ContainsKey(t_varName) 
-                && Variables[t_varName] is null)
-            return ReturnValue;
-        
-        if (!Variables.ContainsKey(t_varName)
-            && (!PrivateFunctions.ContainsKey(t_varName) && !PublicFunctions.ContainsKey(t_varName)))
-            // throw new Exception($"Variable {t_varName} does not exist." +
-                                 // $"\nVariables: {Variables.Keys}");
-            Helper.Error(Program.Filename, "Variable error", $"Variable {t_varName} does not exist.", context.Start.Line);
-        
-        if (PrivateFunctions.TryGetValue(t_varName, out var t_expr))
-            return t_expr;
-        if (PublicFunctions.TryGetValue(t_varName, out var t_idExpr))
-            return t_idExpr;
-        
-        return Variables[t_varName];
+        var varName = context.IDENTIFIER().GetText();
+
+        // Check if the variable exists in the current mod
+        if (ModStack.Count > 0)
+        {
+            foreach (var mod in ModStack)
+            {
+                if ((mod.Variables.TryGetValue(varName, out var modVariable)
+                    || mod.PrivateVariables.TryGetValue(varName, out modVariable)))
+                    return modVariable;
+            }
+        }
+
+        // If not found, check normal variables
+        if (Variables.TryGetValue(varName, out var normalVariable)
+            || PrivateVariables.TryGetValue(varName, out normalVariable))
+            return normalVariable;
+
+        // Handle case when the variable is not found
+        Helper.Error(Program.Filename, "Variable error", $"Variable {varName} does not exist.", context.Start.Line);
+        return null;
     }
+
 
     // Mods are Classes in BB+
     private string _modName = String.Empty;
     public override object? VisitMod(BBplusParser.ModContext context)
     {
-        _modName = context.IDENTIFIER().GetText();
-        var t_modContent = context.line();
+        var modName = context.IDENTIFIER().GetText();
+        var mod = Mods.TryGetValue(modName, out var existingMod) ? existingMod : new Mod(modName);
 
-        // Push the current mod onto the stack
-        ModStack.Push(_modName);
+        ModStack.Push(mod);
 
         try
         {
-            // Initialize a result object
-            object? t_result = null;
-
             // Visit each line in the mod
-            foreach (var t_line in t_modContent)
-                t_result = Visit(t_line);
+            foreach (var line in context.line())
+                Visit(line);
 
-            // Handle storing the result in the appropriate mod
-            // For simplicity, let's assume mods are stored in a dictionary
-            // You might want to adjust this based on your application's needs
-            if (!Mods.TryAdd(_modName, t_result))
-                Helper.Error(Program.Filename, "Module error", $"Module {_modName} already exists.", context.Start.Line);
+            // Store the mod instance in the Mods dictionary
+            Mods.TryAdd(modName, mod);
+
+            // Add the mod to the set of active mods
+            ActiveMods.Add(mod);
 
             return null;
         }
         finally
         {
-            // Pop the current mod from the stack
-            _modName = String.Empty;
-            ModStack.Pop();
+            // Check if the mod is no longer in use, then pop it from the stack
+            if (!IsModInUse(mod))
+                ModStack.Pop();
         }
+    }
+
+    // Method to check if a mod is in use
+    private bool IsModInUse(Mod mod)
+    {
+        // Iterate through active mods and check if the given mod is in use
+        foreach (var activeMod in ActiveMods)
+        {
+            if (activeMod == mod || activeMod.Variables.Values.Any(value => value == mod))
+                return true;
+        }
+        return false;
     }
 
     public override object? VisitConstant(BBplusParser.ConstantContext context)

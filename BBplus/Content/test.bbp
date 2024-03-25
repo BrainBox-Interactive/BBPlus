@@ -38,8 +38,12 @@ mod Counter {
     }
     
     decrement => @fn() {
-        count => count - 1;
-        message: "Count is now", count;
+        if (count > 0) {
+            count => count - 1;
+            message: "Count is now", count;
+        } else {
+            message: "Cannot decrement count below 0. Count remains", count;
+        }
     }
     
     reset => @fn() {
